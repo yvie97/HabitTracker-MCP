@@ -1,0 +1,53 @@
+[package]
+name = "habit-tracker-mcp"
+version = "0.1.0"
+edition = "2021"
+description = "A Model Context Protocol server for intelligent habit tracking and analytics"
+authors = ["Yvie"]
+license = "MIT"
+repository = "https://github.com/yvie97/HabitTracker-MCP.git"
+
+[dependencies]
+# MCP Protocol - Using alternative compatible MCP library for server implementation
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+schemars = { version = "0.8", features = ["derive"] }
+tokio = { version = "1.0", features = ["macros", "rt-multi-thread", "io-std", "io-util"] }
+
+# Date/Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Database layer with SQLite
+rusqlite = { version = "0.31", features = ["bundled", "chrono"] }
+
+# Validation and type safety
+thiserror = "1.0"
+
+# Async runtime and utilities
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# CLI argument parsing (for running as standalone server)
+clap = { version = "4.0", features = ["derive"] }
+
+# Directory utilities
+dirs = "5.0"
+
+# Async traits
+async-trait = "0.1"
+
+# JSON-RPC and I/O
+jsonrpc-core = "18.0"
+jsonrpc-derive = "18.0"
+futures = "0.3"
+
+[dev-dependencies]
+tempfile = "3.0"
+tokio-test = "0.4"
+
+[[bin]]
+name = "habit-tracker-mcp"
+path = "src/main.rs"
