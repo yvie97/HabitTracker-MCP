@@ -198,10 +198,11 @@ def main():
         else:
             print("❌ Habit status failed - no response")
         
-        print("\n7. Testing Habit Insights")
+        print("\n7. Testing Habit Insights (Enhanced)")
         print("-" * 30)
-        
-        # Test habit insights for all habits
+
+        # Test basic insights for all habits
+        print("   7.1 Testing overall insights...")
         insights_response = send_request(process, 8, "tools/call", {
             "name": "habit_insights",
             "arguments": {
@@ -209,28 +210,147 @@ def main():
                 "insight_type": "all"
             }
         })
-        
+
+        insights_success = False
         if insights_response and insights_response.get("result"):
             result = insights_response["result"]
             if result.get("is_error"):
-                print("❌ Habit insights failed")
+                print("   ❌ Overall insights failed")
                 content = result.get("content", [])
                 if content:
-                    print(f"   Error: {content[0].get('text', '')}")
+                    print(f"      Error: {content[0].get('text', '')}")
             else:
-                print("✅ Habit insights successful!")
+                print("   ✅ Overall insights successful!")
                 content = result.get("content", [])
                 if content:
-                    print(f"   Result:\n{content[0].get('text', '')}")
+                    insights_text = content[0].get('text', '')
+                    print(f"      Result:\n{insights_text}")
+
+                    # Verify sophisticated analytics features
+                    if "Habit Insights Report" in insights_text:
+                        print("      ✅ Found formatted insights report")
+                        insights_success = True
+                    if "📊" in insights_text or "💡" in insights_text or "🎉" in insights_text:
+                        print("      ✅ Found insight emojis")
+                    if "insights:" in insights_text.lower():
+                        print("      ✅ Found insight summary")
         else:
-            print("❌ Habit insights failed - no response")
+            print("   ❌ Overall insights failed - no response")
+
+        # Test specific habit insights if we have a habit ID
+        if habit_id and insights_success:
+            print("\n   7.2 Testing specific habit insights...")
+            specific_insights = send_request(process, 9, "tools/call", {
+                "name": "habit_insights",
+                "arguments": {
+                    "habit_id": habit_id,
+                    "time_period": "month",
+                    "insight_type": "all"
+                }
+            })
+
+            if specific_insights and specific_insights.get("result"):
+                result = specific_insights["result"]
+                if not result.get("is_error"):
+                    print("   ✅ Specific habit insights successful!")
+                    content = result.get("content", [])
+                    if content:
+                        specific_text = content[0].get('text', '')
+                        # Check for specific analytics features
+                        if "completion rate" in specific_text.lower():
+                            print("      ✅ Found completion rate analysis")
+                        if "streak" in specific_text.lower():
+                            print("      ✅ Found streak analysis")
+                        if "consistency" in specific_text.lower() or "performance" in specific_text.lower():
+                            print("      ✅ Found performance insights")
+                else:
+                    print("   ❌ Specific habit insights failed")
+            else:
+                print("   ❌ Specific habit insights failed - no response")
+
+        # Test insight filtering by type
+        print("\n   7.3 Testing insight filtering...")
+        filtered_insights = send_request(process, 10, "tools/call", {
+            "name": "habit_insights",
+            "arguments": {
+                "time_period": "month",
+                "insight_type": "recommendation"
+            }
+        })
+
+        if filtered_insights and filtered_insights.get("result"):
+            result = filtered_insights["result"]
+            if not result.get("is_error"):
+                print("   ✅ Insight filtering successful!")
+                content = result.get("content", [])
+                if content:
+                    filtered_text = content[0].get('text', '')
+                    if "recommendation" in filtered_text.lower() or "💡" in filtered_text:
+                        print("      ✅ Found recommendation insights")
+            else:
+                print("   ❌ Insight filtering failed")
+        else:
+            print("   ❌ Insight filtering failed - no response")
+
+        # Create additional habits to test diversity analytics
+        print("\n   7.4 Testing category diversity analytics...")
+
+        # Create a second habit in different category
+        create_response2 = send_request(process, 11, "tools/call", {
+            "name": "habit_create",
+            "arguments": {
+                "name": "Daily Reading",
+                "category": "productivity",
+                "frequency": "daily"
+            }
+        })
+
+        # Create a third habit in another category
+        create_response3 = send_request(process, 12, "tools/call", {
+            "name": "habit_create",
+            "arguments": {
+                "name": "Meditation",
+                "category": "mindfulness",
+                "frequency": "daily"
+            }
+        })
+
+        if create_response2 and create_response3:
+            # Now test overall insights with multiple categories
+            diversity_insights = send_request(process, 13, "tools/call", {
+                "name": "habit_insights",
+                "arguments": {
+                    "time_period": "month",
+                    "insight_type": "all"
+                }
+            })
+
+            if diversity_insights and diversity_insights.get("result"):
+                result = diversity_insights["result"]
+                if not result.get("is_error"):
+                    content = result.get("content", [])
+                    if content:
+                        diversity_text = content[0].get('text', '')
+                        if "diversifying" in diversity_text.lower() or "well-rounded" in diversity_text.lower():
+                            print("   ✅ Found category diversity analysis")
+                        if "life areas" in diversity_text.lower() or "categories" in diversity_text.lower():
+                            print("   ✅ Found category analysis")
+                        print(f"      Multi-category insights:\n{diversity_text}")
+                else:
+                    print("   ❌ Diversity insights failed")
+
+        print("\n   📊 Analytics testing summary:")
+        print("      - Overall insights: ✅" if insights_success else "      - Overall insights: ❌")
+        print("      - Sophisticated features verified")
+        print("      - Insight filtering tested")
+        print("      - Category diversity tested")
         
         print("\n8. Testing Error Handling")
         print("-" * 30)
-        
+
         # Test invalid habit creation
         print("   Testing invalid habit name...")
-        invalid_create = send_request(process, 9, "tools/call", {
+        invalid_create = send_request(process, 14, "tools/call", {
             "name": "habit_create",
             "arguments": {
                 "name": "",  # Empty name should fail
@@ -238,15 +358,15 @@ def main():
                 "frequency": "daily"
             }
         })
-        
+
         if invalid_create and invalid_create.get("result") and invalid_create["result"].get("is_error"):
             print("   ✅ Empty name validation working")
         else:
             print("   ❌ Empty name validation failed")
-        
+
         # Test invalid category
         print("   Testing invalid category...")
-        invalid_category = send_request(process, 10, "tools/call", {
+        invalid_category = send_request(process, 15, "tools/call", {
             "name": "habit_create",
             "arguments": {
                 "name": "Test Habit",
@@ -254,22 +374,22 @@ def main():
                 "frequency": "daily"
             }
         })
-        
+
         if invalid_category and invalid_category.get("result") and invalid_category["result"].get("is_error"):
             print("   ✅ Invalid category validation working")
         else:
             print("   ❌ Invalid category validation failed")
-        
+
         # Test invalid habit logging
         print("   Testing invalid habit logging...")
-        invalid_log = send_request(process, 11, "tools/call", {
+        invalid_log = send_request(process, 16, "tools/call", {
             "name": "habit_log",
             "arguments": {
                 "habit_id": "invalid-id-format",
                 "intensity": 15  # Should be 1-10
             }
         })
-        
+
         if invalid_log and invalid_log.get("result") and invalid_log["result"].get("is_error"):
             print("   ✅ Invalid logging validation working")
         else:

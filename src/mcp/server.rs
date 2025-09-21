@@ -12,7 +12,7 @@ use tracing::{debug, error, info};
 
 use crate::mcp::protocol::*;
 use crate::tools;
-use crate::{HabitTrackerServer, ServerError};
+use crate::{HabitTrackerServer, ServerError, InsightsParams};
 
 /// MCP server that handles communication with Claude
 pub struct McpServer {
@@ -325,7 +325,7 @@ impl McpServer {
     
     /// Call the habit_insights tool
     async fn call_habit_insights(&self, args: HashMap<String, Value>) -> ToolCallResult {
-        let insights_params = tools::InsightsParams {
+        let insights_params = InsightsParams {
             habit_id: args.get("habit_id")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string()),

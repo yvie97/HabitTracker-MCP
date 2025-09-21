@@ -16,7 +16,7 @@ mod mcp;
 // Re-export public modules and types
 pub use domain::*;
 pub use storage::{SqliteStorage, StorageError, HabitStorage};
-pub use analytics::AnalyticsEngine;
+pub use analytics::{AnalyticsEngine, Insight, InsightsParams, InsightsResponse};
 
 /// Errors that can occur during server operation
 #[derive(Error, Debug)]
