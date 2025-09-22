@@ -5,10 +5,16 @@ A Model Context Protocol (MCP) server for intelligent habit tracking and analyti
 ## Features
 
 - 📝 **Habit Management**: Create, list, and manage habits with flexible frequency patterns
-- 📊 **Progress Tracking**: Log entries and track completion rates
-- 🔥 **Streak Tracking**: Monitor current and best streaks with intelligent recovery
-- 📈 **Analytics**: Generate insights on habit performance and trends
-- 🎯 **Status Monitoring**: Quick overview of today's habit status
+- 📊 **Progress Tracking**: Log entries and track completion rates with detailed metadata
+- 🔥 **Advanced Streak Tracking**: Sophisticated streak calculations supporting all frequency types:
+  - **Daily**: Consecutive day tracking
+  - **Weekdays**: Monday-Friday streak tracking (skips weekends)
+  - **Weekends**: Saturday-Sunday streak tracking (skips weekdays)
+  - **Weekly**: Consecutive weeks meeting frequency requirements
+  - **Interval**: Custom day intervals (e.g., every 3 days)
+  - **Custom**: Specific weekday patterns (e.g., Mon/Wed/Fri)
+- 📈 **AI-Powered Analytics**: Generate sophisticated insights on habit performance, patterns, and recommendations
+- 🎯 **Real-time Status**: Quick overview of current habit status and streaks
 
 ## Installation
 
@@ -37,11 +43,11 @@ cargo run --bin habit-tracker-mcp
 
 ### Available Tools
 
-- `create_habit`: Create a new habit with customizable frequency
-- `list_habits`: View all habits with their current status
-- `log_entry`: Record habit completion
-- `get_status`: Check today's habit completion status
-- `generate_insights`: Get analytics and performance insights
+- `habit_create`: Create a new habit with customizable frequency patterns (daily, weekdays, weekends, weekly, interval, custom)
+- `habit_list`: View all habits with their current status and categories
+- `habit_log`: Record habit completion with optional intensity, value, and notes
+- `habit_status`: Check comprehensive habit status including current/longest streaks and completion rates
+- `habit_insights`: Generate AI-powered analytics with performance insights, patterns, and personalized recommendations
 
 ## Configuration
 
@@ -61,9 +67,21 @@ cargo test
 ### Database Schema
 
 The application uses SQLite with the following main tables:
-- `habits`: Store habit definitions and metadata
-- `entries`: Track individual habit completions
-- `streaks`: Monitor streak information
+- `habits`: Store habit definitions, categories, and frequency patterns
+- `entries`: Track individual habit completions with timestamps, intensity, and notes
+- Advanced streak calculations are computed dynamically from entry data
+
+### Testing
+
+Run the comprehensive test suite including streak calculation tests:
+
+```bash
+# Run Rust unit tests
+cargo test
+
+# Run MCP integration tests
+python3 test_mcp.py
+```
 
 ## License
 

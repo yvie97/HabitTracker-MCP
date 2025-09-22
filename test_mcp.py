@@ -395,6 +395,164 @@ def main():
         else:
             print("   ❌ Invalid logging validation failed")
         
+        print("\n9. Testing Streak Calculations")
+        print("-" * 30)
+
+        # Helper function to extract streak data from status
+        def extract_streak_data(status_text, habit_name):
+            lines = status_text.split('\n')
+            for i, line in enumerate(lines):
+                if habit_name in line and "🎯" in line:
+                    # Look at the next line for streak info
+                    if i + 1 < len(lines):
+                        streak_line = lines[i + 1]
+                        if "Current streak:" in streak_line and "Best:" in streak_line:
+                            parts = streak_line.split("|")
+                            current_part = parts[0].strip()
+                            best_part = parts[1].strip()
+
+                            current_streak = int(current_part.split("Current streak: ")[1].split(" days")[0])
+                            best_streak = int(best_part.split("Best: ")[1].split(" days")[0])
+
+                            return current_streak, best_streak
+            return None, None
+
+        # Test different frequency types
+        test_cases = [
+            {"name": "Daily Streak Test", "frequency": "daily"},
+            {"name": "Weekdays Streak Test", "frequency": "weekdays"},
+            {"name": "Weekly Streak Test", "frequency": "weekly:3"},
+            {"name": "Weekend Streak Test", "frequency": "weekends"},
+            {"name": "Interval Streak Test", "frequency": "interval:3"}
+        ]
+
+        from datetime import datetime, timedelta
+
+        for i, test_case in enumerate(test_cases):
+            print(f"   9.{i+1} Testing {test_case['name']}...")
+
+            # Create habit for this test
+            create_response = send_request(process, 100+i, "tools/call", {
+                "name": "habit_create",
+                "arguments": {
+                    "name": test_case["name"],
+                    "category": "health",
+                    "frequency": test_case["frequency"]
+                }
+            })
+
+            if not (create_response and create_response.get("result") and not create_response["result"].get("is_error")):
+                print(f"   ❌ Failed to create {test_case['name']}")
+                continue
+
+            # Extract habit ID
+            content = create_response["result"]["content"][0]["text"]
+            if "Habit ID:" in content:
+                test_habit_id = content.split("Habit ID: ")[1].strip()
+            else:
+                print(f"   ❌ Could not extract habit ID for {test_case['name']}")
+                continue
+
+            # Log some completions for streak testing
+            today = datetime.now()
+            log_count = 0
+
+            if test_case["frequency"] == "daily":
+                # Log 3 consecutive days
+                for j in range(3):
+                    date = (today - timedelta(days=2-j)).strftime("%Y-%m-%d")
+                    log_response = send_request(process, 200+i*10+j, "tools/call", {
+                        "name": "habit_log",
+                        "arguments": {
+                            "habit_id": test_habit_id,
+                            "completed_at": date
+                        }
+                    })
+                    if log_response and log_response.get("result") and not log_response["result"].get("is_error"):
+                        log_count += 1
+
+            elif test_case["frequency"] == "weekdays":
+                # Log weekdays only
+                for j in range(7):
+                    date = today - timedelta(days=j)
+                    if date.weekday() < 5:  # Monday=0 to Friday=4
+                        date_str = date.strftime("%Y-%m-%d")
+                        log_response = send_request(process, 200+i*10+j, "tools/call", {
+                            "name": "habit_log",
+                            "arguments": {
+                                "habit_id": test_habit_id,
+                                "completed_at": date_str
+                            }
+                        })
+                        if log_response and log_response.get("result") and not log_response["result"].get("is_error"):
+                            log_count += 1
+
+            elif test_case["frequency"] == "weekends":
+                # Log weekends only
+                for j in range(14):
+                    date = today - timedelta(days=j)
+                    if date.weekday() >= 5:  # Saturday=5, Sunday=6
+                        date_str = date.strftime("%Y-%m-%d")
+                        log_response = send_request(process, 200+i*10+j, "tools/call", {
+                            "name": "habit_log",
+                            "arguments": {
+                                "habit_id": test_habit_id,
+                                "completed_at": date_str
+                            }
+                        })
+                        if log_response and log_response.get("result") and not log_response["result"].get("is_error"):
+                            log_count += 1
+
+            elif "weekly:" in test_case["frequency"]:
+                # Log 3 times this week and 3 times last week
+                for j in [0, 2, 4, 7, 9, 11]:  # Spread across 2 weeks
+                    date = (today - timedelta(days=j)).strftime("%Y-%m-%d")
+                    log_response = send_request(process, 200+i*10+j, "tools/call", {
+                        "name": "habit_log",
+                        "arguments": {
+                            "habit_id": test_habit_id,
+                            "completed_at": date
+                        }
+                    })
+                    if log_response and log_response.get("result") and not log_response["result"].get("is_error"):
+                        log_count += 1
+
+            elif "interval:" in test_case["frequency"]:
+                # Log every 3 days
+                for j in [0, 3, 6]:
+                    date = (today - timedelta(days=j)).strftime("%Y-%m-%d")
+                    log_response = send_request(process, 200+i*10+j, "tools/call", {
+                        "name": "habit_log",
+                        "arguments": {
+                            "habit_id": test_habit_id,
+                            "completed_at": date
+                        }
+                    })
+                    if log_response and log_response.get("result") and not log_response["result"].get("is_error"):
+                        log_count += 1
+
+            # Get status and check streaks
+            status_response = send_request(process, 300+i, "tools/call", {
+                "name": "habit_status",
+                "arguments": {}
+            })
+
+            if status_response and status_response.get("result") and not status_response["result"].get("is_error"):
+                status_text = status_response["result"]["content"][0]["text"]
+                current_streak, best_streak = extract_streak_data(status_text, test_case["name"])
+
+                print(f"      Logged {log_count} completions")
+                print(f"      Current streak: {current_streak}, Best streak: {best_streak}")
+
+                if current_streak is not None and best_streak is not None and current_streak > 0:
+                    print(f"   ✅ {test_case['name']} streak calculation working")
+                else:
+                    print(f"   ❌ {test_case['name']} streak calculation failed")
+            else:
+                print(f"   ❌ Failed to get status for {test_case['name']}")
+
+        print("\n   📊 Streak calculation testing completed")
+
         print("\n🎉 MCP Server test completed!")
         
     except KeyboardInterrupt:
