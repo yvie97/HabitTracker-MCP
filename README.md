@@ -44,10 +44,36 @@ cargo run --bin habit-tracker-mcp
 ### Available Tools
 
 - `habit_create`: Create a new habit with customizable frequency patterns (daily, weekdays, weekends, weekly, interval, custom)
-- `habit_list`: View all habits with their current status and categories
+- `habit_list`: List habits with detailed analytics including streaks, completion rates, frequency patterns, and sorting options (by streak, completion rate, name, or total completions)
 - `habit_log`: Record habit completion with optional intensity, value, and notes
 - `habit_status`: Check comprehensive habit status including current/longest streaks and completion rates
 - `habit_insights`: Generate AI-powered analytics with performance insights, patterns, and personalized recommendations
+
+### Enhanced Habit Listing
+
+The `habit_list` tool provides rich, detailed information about your habits:
+
+**Features:**
+- 📊 **Real-time Analytics**: Current streaks, completion rates, and total completions
+- 📅 **Frequency Display**: Human-readable frequency descriptions (Daily, Weekdays, "3 times per week", etc.)
+- 🔄 **Smart Sorting**: Sort by streak length, completion rate, total completions, or alphabetically
+- 🏷️ **Category Filtering**: Filter habits by category (health, productivity, etc.)
+- 📋 **Rich Formatting**: Beautiful emoji-enhanced output with structured data
+
+**Example Output:**
+```
+📋 Habit Summary (3 habits)
+
+🎯 Morning Exercise (health)
+   📅 Frequency: Daily | 🔥 Streak: 7 days | 📊 Rate: 85.7% | ✅ Total: 12
+
+🎯 Reading Practice (productivity)
+   📅 Frequency: Weekdays | 🔥 Streak: 3 days | 📊 Rate: 75.0% | ✅ Total: 9
+
+📊 Overall Stats
+- Active habits: 2
+- Average completion rate: 80.4%
+```
 
 ## Configuration
 
