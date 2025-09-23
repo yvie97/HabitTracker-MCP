@@ -173,10 +173,14 @@ impl McpServer {
             },
             ToolDefinition {
                 name: "habit_list".to_string(),
-                description: "List all habits".to_string(),
+                description: "List all habits with detailed information including streaks, completion rates, and sorting options".to_string(),
                 input_schema: json!({
                     "type": "object",
-                    "properties": {},
+                    "properties": {
+                        "category": {"type": "string", "description": "Filter by category (health, productivity, etc.) - optional"},
+                        "active_only": {"type": "boolean", "description": "Show only active habits (default: true) - optional"},
+                        "sort_by": {"type": "string", "description": "Sort by: 'name', 'streak', 'completion_rate', 'total_completions' (default: name) - optional"}
+                    },
                     "required": []
                 }),
             },
@@ -344,26 +348,47 @@ impl McpServer {
     }
     
     /// Call the habit_list tool
-    async fn call_habit_list(&self, _args: HashMap<String, Value>) -> ToolCallResult {
+    async fn call_habit_list(&self, args: HashMap<String, Value>) -> ToolCallResult {
         let list_params = tools::ListHabitsParams {
-            category: None,
-            active_only: Some(true),
-            sort_by: None,
+            category: args.get("category")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            active_only: args.get("active_only")
+                .and_then(|v| v.as_bool())
+                .or(Some(true)), // Default to active only
+            sort_by: args.get("sort_by")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
         };
-        
+
         match tools::list_habits(self.habit_tracker.storage(), list_params) {
             Ok(response) => {
                 if response.habits.is_empty() {
                     ToolCallResult::success("No habits found. Create your first habit to get started!".to_string())
                 } else {
-                    let summary = format!("Found {} habits:\n{}", 
-                        response.summary.total_habits,
-                        response.habits.iter()
-                            .map(|h| format!("- {} ({})", h.name, h.category))
-                            .collect::<Vec<_>>()
-                            .join("\n")
+                    let summary = format!("📋 **Habit Summary** ({} habits)\n\n", response.summary.total_habits);
+
+                    let detailed_list = response.habits.iter()
+                        .map(|h| {
+                            format!("🎯 **{}** ({})\n   📅 Frequency: {} | 🔥 Streak: {} days | 📊 Rate: {:.1}% | ✅ Total: {}{}",
+                                h.name,
+                                h.category,
+                                h.frequency,
+                                h.current_streak,
+                                h.completion_rate * 100.0,
+                                h.total_completions,
+                                if h.is_active { "" } else { " ⏸️ (paused)" }
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n\n");
+
+                    let overall_stats = format!("\n\n📊 **Overall Stats**\n- Active habits: {}\n- Average completion rate: {:.1}%",
+                        response.summary.active_habits,
+                        response.summary.avg_completion_rate * 100.0
                     );
-                    ToolCallResult::success(summary)
+
+                    ToolCallResult::success(format!("{}{}{}", summary, detailed_list, overall_stats))
                 }
             },
             Err(e) => ToolCallResult::error(e.to_string()),

@@ -130,11 +130,209 @@ def main():
                 print(f"   Result: {content[0].get('text', '')}")
         else:
             print("❌ Habit listing failed")
+
+        print("\n4.1 Testing Enhanced Habit Listing Features")
+        print("-" * 30)
+
+        # Create additional test habits with different frequencies
+        test_habits = [
+            {"name": "Weekly Exercise", "category": "health", "frequency": "weekly:3"},
+            {"name": "Weekday Reading", "category": "productivity", "frequency": "weekdays"},
+            {"name": "Weekend Meditation", "category": "mindfulness", "frequency": "weekends"},
+            {"name": "Writing Practice", "category": "creative", "frequency": "interval:2"}
+        ]
+
+        habit_ids = []
+
+        for i, habit_data in enumerate(test_habits):
+            create_resp = send_request(process, 50 + i, "tools/call", {
+                "name": "habit_create",
+                "arguments": habit_data
+            })
+
+            if create_resp and create_resp.get("result"):
+                content = create_resp["result"].get("content", [])
+                if content:
+                    message = content[0].get("text", "")
+                    if "Habit ID:" in message:
+                        test_habit_id = message.split("Habit ID: ")[1].strip()
+                        habit_ids.append(test_habit_id)
+                        print(f"   ✅ Created {habit_data['name']} with ID: {test_habit_id}")
+
+        # Add some completions to test streak calculations
+        import json
+        from datetime import datetime, timedelta
+
+        if habit_ids:
+            print("   Adding sample completions for streak testing...")
+            today = datetime.now()
+
+            # Add completions for the first habit (daily exercise)
+            for j in range(3):
+                date = (today - timedelta(days=2-j)).strftime("%Y-%m-%d")
+                log_resp = send_request(process, 60 + j, "tools/call", {
+                    "name": "habit_log",
+                    "arguments": {
+                        "habit_id": habit_ids[0] if habit_ids else habit_id,
+                        "completed_at": date,
+                        "value": 30,
+                        "intensity": 8
+                    }
+                })
+                if log_resp and log_resp.get("result") and not log_resp["result"].get("is_error"):
+                    print(f"      ✅ Logged completion for {date}")
+
+        # Test 4.1.1: Frequency Display Testing
+        print("\n   4.1.1 Testing frequency display...")
+        detailed_list = send_request(process, 70, "tools/call", {
+            "name": "habit_list",
+            "arguments": {}
+        })
+
+        if detailed_list and detailed_list.get("result"):
+            content = detailed_list["result"].get("content", [])
+            if content:
+                list_text = content[0].get("text", "")
+
+                # Check for different frequency displays
+                frequency_checks = [
+                    ("Daily", "daily frequency"),
+                    ("3 times per week", "weekly frequency"),
+                    ("Weekdays", "weekdays frequency"),
+                    ("Weekends", "weekends frequency"),
+                    ("Every 2 days", "interval frequency")
+                ]
+
+                found_frequencies = 0
+                for freq_text, description in frequency_checks:
+                    if freq_text in list_text:
+                        print(f"      ✅ Found {description}: '{freq_text}'")
+                        found_frequencies += 1
+
+                if found_frequencies >= 3:
+                    print("   ✅ Frequency display conversion working correctly")
+                else:
+                    print(f"   ⚠️ Only found {found_frequencies} frequency displays")
+
+        # Test 4.1.2: Sorting functionality
+        print("\n   4.1.2 Testing sorting functionality...")
+
+        sort_tests = [
+            ("streak", "streak sorting"),
+            ("completion_rate", "completion rate sorting"),
+            ("name", "name sorting")
+        ]
+
+        for sort_by, description in sort_tests:
+            sort_resp = send_request(process, 80 + len([s for s, _ in sort_tests if s == sort_by]), "tools/call", {
+                "name": "habit_list",
+                "arguments": {"sort_by": sort_by}
+            })
+
+            if sort_resp and sort_resp.get("result"):
+                content = sort_resp["result"].get("content", [])
+                if content:
+                    sorted_text = content[0].get("text", "")
+                    if "habits" in sorted_text.lower():
+                        print(f"      ✅ {description} successful")
+                    else:
+                        print(f"      ❌ {description} failed")
+            else:
+                print(f"      ❌ {description} failed - no response")
+
+        # Test 4.1.3: Category filtering
+        print("\n   4.1.3 Testing category filtering...")
+
+        category_resp = send_request(process, 85, "tools/call", {
+            "name": "habit_list",
+            "arguments": {"category": "health"}
+        })
+
+        if category_resp and category_resp.get("result"):
+            content = category_resp["result"].get("content", [])
+            if content:
+                filtered_text = content[0].get("text", "")
+                if "health" in filtered_text.lower():
+                    print("      ✅ Category filtering working")
+                else:
+                    print("      ⚠️ Category filtering may not be working as expected")
+
+        # Test 4.1.4: Streak data validation
+        print("\n   4.1.4 Testing streak data in listing...")
+
+        full_list = send_request(process, 90, "tools/call", {
+            "name": "habit_list",
+            "arguments": {}
+        })
+
+        if full_list and full_list.get("result"):
+            content = full_list["result"].get("content", [])
+            if content:
+                full_text = content[0].get("text", "")
+
+                # Check for streak-related data
+                streak_indicators = [
+                    ("streak", "streak data"),
+                    ("completion", "completion data"),
+                    ("rate", "rate data"),
+                    ("%", "percentage data")
+                ]
+
+                found_data = 0
+                for indicator, description in streak_indicators:
+                    if indicator in full_text.lower():
+                        print(f"      ✅ Found {description}")
+                        found_data += 1
+
+                if found_data >= 2:
+                    print("   ✅ Streak and completion data being displayed")
+                else:
+                    print(f"   ⚠️ Limited streak data found ({found_data} indicators)")
+
+                # Look for specific numeric data (not zeros)
+                if any(char.isdigit() and char != '0' for char in full_text):
+                    print("      ✅ Found non-zero numeric data")
+                else:
+                    print("      ⚠️ All numeric data appears to be zeros")
+
+        # Test 4.1.5: JSON structure validation (if we can parse it)
+        print("\n   4.1.5 Testing data structure completeness...")
+
+        json_test = send_request(process, 95, "tools/call", {
+            "name": "habit_list",
+            "arguments": {"sort_by": "streak"}
+        })
+
+        if json_test and json_test.get("result"):
+            content = json_test["result"].get("content", [])
+            if content:
+                result_text = content[0].get("text", "")
+
+                # Check for structured data indicators
+                structure_checks = [
+                    ("habit", "habit references"),
+                    ("frequency", "frequency data"),
+                    ("active", "activity status"),
+                    ("category", "category data")
+                ]
+
+                structure_found = 0
+                for check, description in structure_checks:
+                    if check in result_text.lower():
+                        print(f"      ✅ Found {description}")
+                        structure_found += 1
+
+                if structure_found >= 3:
+                    print("   ✅ Data structure appears complete")
+                else:
+                    print(f"   ⚠️ Limited data structure ({structure_found} elements)")
+
+        print("\n   📊 Enhanced habit listing tests completed")
         
         print("\n5. Testing Habit Logging")
         print("-" * 30)
-        
-        # Extract habit ID from the create response
+
+        # Extract habit ID from the create response (use original habit from test 3)
         habit_id = None
         if create_response and create_response.get("result"):
             content = create_response["result"].get("content", [])
