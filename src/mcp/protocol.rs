@@ -11,12 +11,13 @@ use std::collections::HashMap;
 pub const MCP_VERSION: &str = "2024-11-05";
 
 /// JSON-RPC 2.0 request message
-/// 
+///
 /// This is the standard format for JSON-RPC requests that MCP uses.
 /// When Claude wants to call a tool, it sends a message in this format.
 #[derive(Debug, Deserialize)]
 pub struct JsonRpcRequest {
     /// JSON-RPC version (always "2.0")
+    #[allow(dead_code)]
     pub jsonrpc: String,
     /// Unique identifier for this request
     pub id: Value,
@@ -125,10 +126,13 @@ pub struct ToolsCapability {
 #[derive(Debug, Deserialize)]
 pub struct InitializeParams {
     /// MCP protocol version the client supports
+    #[allow(dead_code)]
     pub protocol_version: String,
     /// Capabilities the client supports
+    #[allow(dead_code)]
     pub capabilities: Value,
     /// Client information
+    #[allow(dead_code)]
     pub client_info: ClientInfo,
 }
 
@@ -136,8 +140,10 @@ pub struct InitializeParams {
 #[derive(Debug, Deserialize)]
 pub struct ClientInfo {
     /// Client name (e.g., "Claude")
+    #[allow(dead_code)]
     pub name: String,
     /// Client version
+    #[allow(dead_code)]
     pub version: String,
 }
 
@@ -165,14 +171,10 @@ pub struct ServerInfo {
 pub mod error_codes {
     /// Parse error - Invalid JSON
     pub const PARSE_ERROR: i32 = -32700;
-    /// Invalid request - JSON is valid but request is malformed
-    pub const INVALID_REQUEST: i32 = -32600;
     /// Method not found - The requested method doesn't exist
     pub const METHOD_NOT_FOUND: i32 = -32601;
     /// Invalid parameters - Method exists but parameters are wrong
     pub const INVALID_PARAMS: i32 = -32602;
-    /// Internal error - Something went wrong in our server
-    pub const INTERNAL_ERROR: i32 = -32603;
 }
 
 impl JsonRpcResponse {

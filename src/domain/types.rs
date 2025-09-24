@@ -14,6 +14,12 @@ use uuid::Uuid;
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct HabitId(pub Uuid);
 
+impl Default for HabitId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl HabitId {
     /// Generate a new random habit ID
     pub fn new() -> Self {
@@ -25,9 +31,11 @@ impl HabitId {
         Ok(Self(Uuid::parse_str(s)?))
     }
     
-    /// Convert to string representation
-    pub fn to_string(&self) -> String {
-        self.0.to_string()
+}
+
+impl std::fmt::Display for HabitId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -36,6 +44,12 @@ impl HabitId {
 /// Similar to HabitId but for individual habit completion records
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct EntryId(pub Uuid);
+
+impl Default for EntryId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl EntryId {
     /// Generate a new random entry ID
@@ -48,9 +62,11 @@ impl EntryId {
         Ok(Self(Uuid::parse_str(s)?))
     }
     
-    /// Convert to string representation
-    pub fn to_string(&self) -> String {
-        self.0.to_string()
+}
+
+impl std::fmt::Display for EntryId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

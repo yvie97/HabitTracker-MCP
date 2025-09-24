@@ -177,7 +177,7 @@ impl Streak {
                 for _ in 0..365 { // Prevent infinite loop
                     if entries.iter().any(|e| e.completed_at == checking_date) {
                         current_streak += 1;
-                        checking_date = checking_date - chrono::Duration::days(1);
+                        checking_date -= chrono::Duration::days(1);
                     } else {
                         break;
                     }
@@ -185,7 +185,7 @@ impl Streak {
             }
             Frequency::Weekly(times_per_week) => {
                 // For weekly habits, check completion within weekly periods
-                let mut current_week_start = today - chrono::Duration::days(today.weekday().num_days_from_monday() as i64);
+                let current_week_start = today - chrono::Duration::days(today.weekday().num_days_from_monday() as i64);
                 let mut consecutive_weeks = 0;
 
                 for week_offset in 0..52 { // Check up to a year
@@ -213,7 +213,7 @@ impl Streak {
                 if matches!(checking_date.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
                     // Go back to Friday
                     while matches!(checking_date.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
-                        checking_date = checking_date - chrono::Duration::days(1);
+                        checking_date -= chrono::Duration::days(1);
                     }
                 }
 
@@ -221,10 +221,10 @@ impl Streak {
                 if !matches!(today.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
                     let has_today = entries.iter().any(|e| e.completed_at == today);
                     if !has_today {
-                        checking_date = checking_date - chrono::Duration::days(1);
+                        checking_date -= chrono::Duration::days(1);
                         // Skip to previous weekday if needed
                         while matches!(checking_date.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
-                            checking_date = checking_date - chrono::Duration::days(1);
+                            checking_date -= chrono::Duration::days(1);
                         }
                     }
                 }
@@ -232,7 +232,7 @@ impl Streak {
                 for _ in 0..365 { // Prevent infinite loop
                     if matches!(checking_date.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
                         // Skip weekends
-                        checking_date = checking_date - chrono::Duration::days(1);
+                        checking_date -= chrono::Duration::days(1);
                         continue;
                     }
 
@@ -242,7 +242,7 @@ impl Streak {
                         break;
                     }
 
-                    checking_date = checking_date - chrono::Duration::days(1);
+                    checking_date -= chrono::Duration::days(1);
                 }
             }
             Frequency::Weekends => {
@@ -253,7 +253,7 @@ impl Streak {
                 if !matches!(checking_date.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
                     // Go back to Sunday
                     while !matches!(checking_date.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
-                        checking_date = checking_date - chrono::Duration::days(1);
+                        checking_date -= chrono::Duration::days(1);
                     }
                 }
 
@@ -261,10 +261,10 @@ impl Streak {
                 if matches!(today.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
                     let has_today = entries.iter().any(|e| e.completed_at == today);
                     if !has_today {
-                        checking_date = checking_date - chrono::Duration::days(1);
+                        checking_date -= chrono::Duration::days(1);
                         // Skip to previous weekend if needed
                         while !matches!(checking_date.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
-                            checking_date = checking_date - chrono::Duration::days(1);
+                            checking_date -= chrono::Duration::days(1);
                         }
                     }
                 }
@@ -272,7 +272,7 @@ impl Streak {
                 for _ in 0..365 { // Prevent infinite loop
                     if !matches!(checking_date.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
                         // Skip weekdays
-                        checking_date = checking_date - chrono::Duration::days(1);
+                        checking_date -= chrono::Duration::days(1);
                         continue;
                     }
 
@@ -282,7 +282,7 @@ impl Streak {
                         break;
                     }
 
-                    checking_date = checking_date - chrono::Duration::days(1);
+                    checking_date -= chrono::Duration::days(1);
                 }
             }
             Frequency::Custom(weekdays) => {
@@ -292,7 +292,7 @@ impl Streak {
                 // Start from today if it's a target day, otherwise find the most recent target day
                 if !weekdays.contains(&checking_date.weekday()) {
                     for _ in 0..7 { // Look back at most a week
-                        checking_date = checking_date - chrono::Duration::days(1);
+                        checking_date -= chrono::Duration::days(1);
                         if weekdays.contains(&checking_date.weekday()) {
                             break;
                         }
@@ -303,13 +303,13 @@ impl Streak {
                 if weekdays.contains(&today.weekday()) {
                     let has_today = entries.iter().any(|e| e.completed_at == today);
                     if !has_today {
-                        checking_date = checking_date - chrono::Duration::days(1);
+                        checking_date -= chrono::Duration::days(1);
                         // Find previous target day
                         for _ in 0..7 {
                             if weekdays.contains(&checking_date.weekday()) {
                                 break;
                             }
-                            checking_date = checking_date - chrono::Duration::days(1);
+                            checking_date -= chrono::Duration::days(1);
                         }
                     }
                 }
@@ -317,7 +317,7 @@ impl Streak {
                 for _ in 0..365 { // Prevent infinite loop
                     if !weekdays.contains(&checking_date.weekday()) {
                         // Skip non-target days
-                        checking_date = checking_date - chrono::Duration::days(1);
+                        checking_date -= chrono::Duration::days(1);
                         continue;
                     }
 
@@ -327,12 +327,11 @@ impl Streak {
                         break;
                     }
 
-                    checking_date = checking_date - chrono::Duration::days(1);
+                    checking_date -= chrono::Duration::days(1);
                 }
             }
             Frequency::Interval(days_interval) => {
                 // For interval habits (e.g., every 3 days), check consecutive intervals
-                let mut checking_date = today;
 
                 // Find the most recent expected date based on interval
                 // This is simplified - ideally we'd track the habit's start date
@@ -340,24 +339,25 @@ impl Streak {
                 let days_since_latest = (today - latest_entry.completed_at).num_days();
 
                 // Start from today if it should be done today, otherwise from the last expected date
-                if days_since_latest % (*days_interval as i64) == 0 && !entries.iter().any(|e| e.completed_at == today) {
-                    checking_date = today - chrono::Duration::days(*days_interval as i64);
+                let mut checking_date = if days_since_latest % (*days_interval as i64) == 0 && !entries.iter().any(|e| e.completed_at == today) {
+                    today - chrono::Duration::days(*days_interval as i64)
                 } else {
-                    checking_date = today;
+                    let mut date = today;
                     // Find the most recent valid interval date
                     for _ in 0..(*days_interval as i64) {
-                        if entries.iter().any(|e| e.completed_at == checking_date) {
+                        if entries.iter().any(|e| e.completed_at == date) {
                             break;
                         }
-                        checking_date = checking_date - chrono::Duration::days(1);
+                        date -= chrono::Duration::days(1);
                     }
-                }
+                    date
+                };
 
                 // Count consecutive intervals
                 for _ in 0..365 { // Prevent infinite loop
                     if entries.iter().any(|e| e.completed_at == checking_date) {
                         current_streak += 1;
-                        checking_date = checking_date - chrono::Duration::days(*days_interval as i64);
+                        checking_date -= chrono::Duration::days(*days_interval as i64);
                     } else {
                         break;
                     }
@@ -455,7 +455,7 @@ impl Streak {
 
                     // Skip weekends
                     while matches!(expected_date.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
-                        expected_date = expected_date + chrono::Duration::days(1);
+                        expected_date += chrono::Duration::days(1);
                     }
 
                     if entry.completed_at == expected_date {
@@ -479,7 +479,7 @@ impl Streak {
 
                     // Skip weekdays
                     while !matches!(expected_date.weekday(), chrono::Weekday::Sat | chrono::Weekday::Sun) {
-                        expected_date = expected_date + chrono::Duration::days(1);
+                        expected_date += chrono::Duration::days(1);
                     }
 
                     if entry.completed_at == expected_date {
@@ -503,7 +503,7 @@ impl Streak {
 
                     // Find next target weekday
                     while !weekdays.contains(&expected_date.weekday()) {
-                        expected_date = expected_date + chrono::Duration::days(1);
+                        expected_date += chrono::Duration::days(1);
                         // Prevent infinite loop if no valid weekdays are specified
                         if (expected_date - last_date).num_days() > 7 {
                             break;
@@ -591,8 +591,6 @@ impl Streak {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::EntryId;
-    use chrono::{DateTime, Utc};
     
     #[test]
     fn test_new_streak() {

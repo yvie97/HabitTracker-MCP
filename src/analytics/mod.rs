@@ -44,6 +44,12 @@ pub struct AnalyticsEngine {
     // TODO: Add configuration and caching as needed
 }
 
+impl Default for AnalyticsEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AnalyticsEngine {
     /// Create a new analytics engine
     pub fn new() -> Self {

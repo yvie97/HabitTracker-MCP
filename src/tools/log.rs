@@ -101,7 +101,7 @@ pub fn log_habit<S: HabitStorage>(
     
     // Validate optional parameters
     if let Some(intensity) = params.intensity {
-        if intensity < 1 || intensity > 10 {
+        if !(1..=10).contains(&intensity) {
             return Err(StorageError::Query(
                 rusqlite::Error::InvalidColumnType(0, "Intensity must be between 1 and 10".to_string(), rusqlite::types::Type::Integer)
             ));

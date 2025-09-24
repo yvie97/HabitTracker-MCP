@@ -190,8 +190,7 @@ impl McpServer {
                 input_schema: json!({
                     "type": "object",
                     "properties": {
-                        "habit_id": {"type": "string", "description": "ID of specific habit (optional - shows all if omitted)"},
-                        "include_recent": {"type": "boolean", "description": "Include recent completion history (optional)"}
+                        "habit_id": {"type": "string", "description": "ID of specific habit (optional - shows all if omitted)"}
                     },
                     "required": []
                 }),
@@ -316,9 +315,6 @@ impl McpServer {
             habit_id: args.get("habit_id")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string()),
-            include_recent: Some(args.get("include_recent")
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false)),
         };
         
         match tools::get_habit_status(self.habit_tracker.storage(), status_params) {

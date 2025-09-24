@@ -10,7 +10,6 @@ use crate::storage::{StorageError, HabitStorage};
 #[derive(Debug, Deserialize)]
 pub struct StatusParams {
     pub habit_id: Option<String>, // If omitted, returns all habits
-    pub include_recent: Option<bool>,
 }
 
 /// Information about a single habit's status

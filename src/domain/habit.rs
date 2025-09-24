@@ -66,9 +66,10 @@ impl Habit {
     }
     
     /// Create a habit from existing data (used when loading from database)
-    /// 
+    ///
     /// This constructor assumes data is already validated and is mainly used
     /// by the storage layer when loading habits from the database.
+    #[allow(clippy::too_many_arguments)]
     pub fn from_existing(
         id: HabitId,
         name: String,
@@ -199,20 +200,17 @@ impl Habit {
         target_value: &Option<u32>,
         unit: &Option<String>,
     ) -> Result<(), DomainError> {
-        match (target_value, unit) {
-            (Some(value), _) => {
-                if *value == 0 {
-                    return Err(DomainError::InvalidValue {
-                        message: "Target value must be greater than 0".to_string()
-                    });
-                }
-                if *value > 10000 {
-                    return Err(DomainError::InvalidValue {
-                        message: "Target value cannot exceed 10000".to_string()
-                    });
-                }
+        if let (Some(value), _) = (target_value, unit) {
+            if *value == 0 {
+                return Err(DomainError::InvalidValue {
+                    message: "Target value must be greater than 0".to_string()
+                });
             }
-            _ => {}
+            if *value > 10000 {
+                return Err(DomainError::InvalidValue {
+                    message: "Target value cannot exceed 10000".to_string()
+                });
+            }
         }
         
         if let Some(unit_str) = unit {
@@ -236,7 +234,6 @@ impl Habit {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Weekday;
     
     #[test]
     fn test_create_valid_habit() {
