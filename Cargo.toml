@@ -48,6 +48,15 @@ futures = "0.3"
 tempfile = "3.0"
 tokio-test = "0.4"
 
+# Test configuration
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"
+
+[[test]]
+name = "unit"
+path = "tests/unit/mod.rs"
+
 [[bin]]
 name = "habit-tracker-mcp"
 path = "src/main.rs"

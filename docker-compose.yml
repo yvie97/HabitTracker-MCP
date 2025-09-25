@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  habit-tracker-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: habit-tracker-mcp
+    restart: unless-stopped
+    volumes:
+      # Persist database data
+      - habit_data:/app/data
+    environment:
+      - RUST_LOG=info
+      - HABIT_TRACKER_DATA_DIR=/app/data
+    ports:
+      # Uncomment if you add HTTP interface
+      # - "3000:3000"
+    healthcheck:
+      test: ["CMD", "pgrep", "habit-tracker-mcp"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - habit-tracker-net
+
+  # Optional: Add monitoring with Prometheus/Grafana
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+  #   networks:
+  #     - habit-tracker-net
+
+volumes:
+  habit_data:
+    driver: local
+
+networks:
+  habit-tracker-net:
+    driver: bridge

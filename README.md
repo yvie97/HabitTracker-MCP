@@ -102,11 +102,11 @@ The application uses SQLite with the following main tables:
 Run the comprehensive test suite including streak calculation tests:
 
 ```bash
-# Run Rust unit tests
+# Run Rust unit and integration tests
 cargo test
 
-# Run MCP integration tests
-python3 test_mcp.py
+# Run MCP protocol tests
+python3 tests/test_mcp.py
 ```
 
 ## License
