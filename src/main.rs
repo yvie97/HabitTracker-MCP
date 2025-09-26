@@ -9,6 +9,56 @@ use tracing::info;
 
 use habit_tracker_mcp::HabitTrackerServer;
 
+/// Get the default database path with robust fallback strategy
+fn get_default_database_path() -> Result<PathBuf, Box<dyn std::error::Error>> {
+    // Try various locations in order of preference
+    let potential_paths = [
+        // 1. User's home directory (preferred)
+        dirs::home_dir().map(|mut p| {
+            p.push(".habit_tracker");
+            p
+        }),
+        // 2. User's data directory (platform-specific)
+        dirs::data_dir().map(|mut p| {
+            p.push("habit_tracker");
+            p
+        }),
+        // 3. User's config directory
+        dirs::config_dir().map(|mut p| {
+            p.push("habit_tracker");
+            p
+        }),
+        // 4. Current working directory (last resort)
+        std::env::current_dir().ok().map(|mut p| {
+            p.push(".habit_tracker");
+            p
+        }),
+    ];
+
+    for potential_path in potential_paths.iter().flatten() {
+        // Try to create the directory
+        if let Ok(()) = std::fs::create_dir_all(potential_path) {
+            // Test if we can write to this directory
+            let test_file = potential_path.join(".test_write");
+            if std::fs::write(&test_file, "test").is_ok() {
+                let _ = std::fs::remove_file(&test_file); // Clean up test file
+                let mut db_path = potential_path.clone();
+                db_path.push("habits.db");
+                return Ok(db_path);
+            }
+        }
+    }
+
+    // Ultimate fallback: use a temporary directory
+    let mut temp_path = std::env::temp_dir();
+    temp_path.push("habit_tracker");
+    std::fs::create_dir_all(&temp_path)?;
+    temp_path.push("habits.db");
+
+    tracing::warn!("Using temporary directory for database: {}", temp_path.display());
+    Ok(temp_path)
+}
+
 /// Command line arguments for the Habit Tracker MCP server
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -49,15 +99,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Determine database path
     let db_path = match args.database {
-        Some(path) => path,
-        None => {
-            // Use a default path in the user's home directory
-            let mut path = dirs::home_dir()
-                .unwrap_or_else(|| PathBuf::from("."));
-            path.push(".habit_tracker");
-            std::fs::create_dir_all(&path)?;
-            path.push("habits.db");
+        Some(path) => {
+            // Validate and prepare the provided path
+            if let Some(parent) = path.parent() {
+                if !parent.exists() {
+                    std::fs::create_dir_all(parent)?;
+                }
+            }
             path
+        }
+        None => {
+            // Use a robust default path strategy
+            get_default_database_path()?
         }
     };
     

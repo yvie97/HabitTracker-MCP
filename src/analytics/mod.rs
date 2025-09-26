@@ -36,12 +36,34 @@ pub struct InsightsResponse {
     pub generated_at: String,
 }
 
+/// Configuration for the analytics engine
+#[derive(Debug, Clone)]
+pub struct AnalyticsConfig {
+    /// Enable caching of calculated insights
+    pub enable_caching: bool,
+    /// Maximum age for cached insights in seconds
+    pub cache_ttl_seconds: u64,
+    /// Minimum number of entries required for pattern analysis
+    pub min_entries_for_analysis: usize,
+}
+
+impl Default for AnalyticsConfig {
+    fn default() -> Self {
+        Self {
+            enable_caching: true,
+            cache_ttl_seconds: 3600, // 1 hour
+            min_entries_for_analysis: 5,
+        }
+    }
+}
+
 /// Analytics engine for processing habit data
 ///
 /// This struct contains the logic for analyzing user habits and
 /// generating meaningful insights and recommendations.
 pub struct AnalyticsEngine {
-    // TODO: Add configuration and caching as needed
+    config: AnalyticsConfig,
+    // Future: add insight cache here when needed
 }
 
 impl Default for AnalyticsEngine {
@@ -51,9 +73,14 @@ impl Default for AnalyticsEngine {
 }
 
 impl AnalyticsEngine {
-    /// Create a new analytics engine
+    /// Create a new analytics engine with default configuration
     pub fn new() -> Self {
-        Self {}
+        Self::with_config(AnalyticsConfig::default())
+    }
+
+    /// Create a new analytics engine with custom configuration
+    pub fn with_config(config: AnalyticsConfig) -> Self {
+        Self { config }
     }
     
     /// Calculate streak information for a habit based on its entries
@@ -273,7 +300,10 @@ impl AnalyticsEngine {
                     active_streaks += 1;
                     total_streak_days += streak.current_streak;
                 }
-                completion_rates.push(streak.completion_rate);
+                // Only include completion rates if we have enough data for analysis
+                if streak.total_completions >= self.config.min_entries_for_analysis as u32 {
+                    completion_rates.push(streak.completion_rate);
+                }
             }
 
             let category_name = match &habit.category {
