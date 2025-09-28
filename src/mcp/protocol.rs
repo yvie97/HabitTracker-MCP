@@ -168,13 +168,28 @@ pub struct ServerInfo {
 }
 
 // JSON-RPC error codes (standard codes)
+#[allow(dead_code)] // These constants are defined for completeness and future use
 pub mod error_codes {
-    /// Parse error - Invalid JSON
+    /// Parse error - Invalid JSON was received by the server
     pub const PARSE_ERROR: i32 = -32700;
+    /// Invalid Request - The JSON sent is not a valid Request object
+    pub const INVALID_REQUEST: i32 = -32600;
     /// Method not found - The requested method doesn't exist
     pub const METHOD_NOT_FOUND: i32 = -32601;
     /// Invalid parameters - Method exists but parameters are wrong
     pub const INVALID_PARAMS: i32 = -32602;
+    /// Internal error - Internal JSON-RPC error
+    pub const INTERNAL_ERROR: i32 = -32603;
+
+    // Application-specific error codes (as per JSON-RPC 2.0 spec, these should be in -32000 to -32099 range)
+    /// Habit not found - The specified habit ID doesn't exist
+    pub const HABIT_NOT_FOUND: i32 = -32001;
+    /// Duplicate entry - An entry already exists for this habit on this date
+    pub const DUPLICATE_ENTRY: i32 = -32002;
+    /// Validation error - Input validation failed
+    pub const VALIDATION_ERROR: i32 = -32003;
+    /// Storage error - Database or storage operation failed
+    pub const STORAGE_ERROR: i32 = -32004;
 }
 
 impl JsonRpcResponse {
@@ -214,7 +229,7 @@ impl ToolCallResult {
             is_error: false,
         }
     }
-    
+
     /// Create an error tool result
     pub fn error(error_message: String) -> Self {
         Self {
@@ -224,5 +239,21 @@ impl ToolCallResult {
             }],
             is_error: true,
         }
+    }
+}
+
+/// Helper function to map storage errors to appropriate JSON-RPC error codes
+#[allow(dead_code)] // This function is defined for future use in more detailed error reporting
+pub fn storage_error_to_json_rpc_code(error: &crate::storage::StorageError) -> i32 {
+    use crate::storage::StorageError;
+
+    match error {
+        StorageError::HabitNotFound { .. } => error_codes::HABIT_NOT_FOUND,
+        StorageError::EntryNotFound { .. } => error_codes::HABIT_NOT_FOUND, // Reuse same code
+        StorageError::DuplicateEntry { .. } => error_codes::DUPLICATE_ENTRY,
+        StorageError::Query(_) => error_codes::STORAGE_ERROR,
+        StorageError::Connection(_) => error_codes::STORAGE_ERROR,
+        StorageError::Serialization(_) => error_codes::INTERNAL_ERROR,
+        StorageError::Migration(_) => error_codes::STORAGE_ERROR,
     }
 }

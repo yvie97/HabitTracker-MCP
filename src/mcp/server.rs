@@ -208,6 +208,23 @@ impl McpServer {
                     "required": []
                 }),
             },
+            ToolDefinition {
+                name: "habit_update".to_string(),
+                description: "Update an existing habit's properties like name, frequency, target, or active status".to_string(),
+                input_schema: json!({
+                    "type": "object",
+                    "properties": {
+                        "habit_id": {"type": "string", "description": "ID of the habit to update"},
+                        "name": {"type": "string", "description": "New name for the habit (optional)"},
+                        "description": {"type": "string", "description": "New description for the habit (optional)"},
+                        "frequency": {"type": "string", "description": "New frequency: 'daily', 'weekdays', 'weekends', 'weekly', 'custom' (optional)"},
+                        "target_value": {"type": "number", "description": "New target value (optional)"},
+                        "unit": {"type": "string", "description": "New unit for target value (optional)"},
+                        "is_active": {"type": "boolean", "description": "Whether habit is active (true) or paused (false) (optional)"}
+                    },
+                    "required": ["habit_id"]
+                }),
+            },
         ];
         
         JsonRpcResponse::success(request.id, json!({"tools": tools}))
@@ -243,6 +260,7 @@ impl McpServer {
             "habit_list" => self.call_habit_list(tool_params.arguments).await,
             "habit_status" => self.call_habit_status(tool_params.arguments).await,
             "habit_insights" => self.call_habit_insights(tool_params.arguments).await,
+            "habit_update" => self.call_habit_update(tool_params.arguments).await,
             _ => ToolCallResult::error(format!("Unknown tool: {}", tool_params.name)),
         };
         
@@ -387,6 +405,38 @@ impl McpServer {
                     ToolCallResult::success(format!("{}{}{}", summary, detailed_list, overall_stats))
                 }
             },
+            Err(e) => ToolCallResult::error(e.to_string()),
+        }
+    }
+
+    /// Call the habit_update tool
+    async fn call_habit_update(&self, args: HashMap<String, Value>) -> ToolCallResult {
+        let update_params = tools::UpdateHabitParams {
+            habit_id: args.get("habit_id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string(),
+            name: args.get("name")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            description: args.get("description")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            frequency: args.get("frequency")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            target_value: args.get("target_value")
+                .and_then(|v| v.as_u64())
+                .map(|n| n as u32),
+            unit: args.get("unit")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            is_active: args.get("is_active")
+                .and_then(|v| v.as_bool()),
+        };
+
+        match tools::update_habit(self.habit_tracker.storage(), update_params) {
+            Ok(response) => ToolCallResult::success(response.message),
             Err(e) => ToolCallResult::error(e.to_string()),
         }
     }

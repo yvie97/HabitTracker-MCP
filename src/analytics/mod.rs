@@ -74,11 +74,35 @@ impl Default for AnalyticsEngine {
 
 impl AnalyticsEngine {
     /// Create a new analytics engine with default configuration
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use habit_tracker_mcp::analytics::AnalyticsEngine;
+    ///
+    /// let engine = AnalyticsEngine::new();
+    /// // The engine is now ready to analyze habit data
+    /// ```
     pub fn new() -> Self {
         Self::with_config(AnalyticsConfig::default())
     }
 
     /// Create a new analytics engine with custom configuration
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use habit_tracker_mcp::analytics::{AnalyticsEngine, AnalyticsConfig};
+    ///
+    /// let config = AnalyticsConfig {
+    ///     enable_caching: false,
+    ///     cache_ttl_seconds: 1800, // 30 minutes
+    ///     min_entries_for_analysis: 3,
+    /// };
+    ///
+    /// let engine = AnalyticsEngine::with_config(config);
+    /// // Engine configured with custom settings
+    /// ```
     pub fn with_config(config: AnalyticsConfig) -> Self {
         Self { config }
     }

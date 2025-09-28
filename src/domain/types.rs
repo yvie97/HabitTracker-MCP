@@ -22,15 +22,37 @@ impl Default for HabitId {
 
 impl HabitId {
     /// Generate a new random habit ID
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use habit_tracker_mcp::domain::HabitId;
+    ///
+    /// let id = HabitId::new();
+    /// assert!(!id.to_string().is_empty());
+    /// ```
     pub fn new() -> Self {
         Self(Uuid::new_v4())
     }
-    
+
     /// Create a habit ID from a string (useful for database loading)
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use habit_tracker_mcp::domain::HabitId;
+    ///
+    /// let id_str = "123e4567-e89b-12d3-a456-426614174000";
+    /// let id = HabitId::from_string(id_str).unwrap();
+    /// assert_eq!(id.to_string(), id_str);
+    ///
+    /// // Invalid UUID strings will fail
+    /// assert!(HabitId::from_string("invalid-uuid").is_err());
+    /// ```
     pub fn from_string(s: &str) -> Result<Self, uuid::Error> {
         Ok(Self(Uuid::parse_str(s)?))
     }
-    
+
 }
 
 impl std::fmt::Display for HabitId {
@@ -134,7 +156,54 @@ pub enum Frequency {
 }
 
 impl Frequency {
+    /// Get a human-readable description of the frequency
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use habit_tracker_mcp::domain::{Frequency};
+    /// use chrono::Weekday;
+    ///
+    /// let daily = Frequency::Daily;
+    /// assert_eq!(daily.display_name(), "Daily");
+    ///
+    /// let weekly = Frequency::Weekly(3);
+    /// assert_eq!(weekly.display_name(), "3 times per week");
+    ///
+    /// let custom = Frequency::Custom(vec![Weekday::Mon, Weekday::Wed, Weekday::Fri]);
+    /// assert_eq!(custom.display_name(), "Monday, Wednesday, Friday");
+    /// ```
+    pub fn display_name(&self) -> String {
+        match self {
+            Frequency::Daily => "Daily".to_string(),
+            Frequency::Weekly(times) => format!("{} times per week", times),
+            Frequency::Weekdays => "Weekdays (Mon-Fri)".to_string(),
+            Frequency::Weekends => "Weekends (Sat-Sun)".to_string(),
+            Frequency::Custom(days) => {
+                days.iter()
+                    .map(|d| format!("{:?}", d))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            }
+            Frequency::Interval(days) => format!("Every {} days", days),
+        }
+    }
+
     /// Validate that a frequency value is reasonable
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use habit_tracker_mcp::domain::Frequency;
+    ///
+    /// // Valid frequencies
+    /// assert!(Frequency::Daily.validate().is_ok());
+    /// assert!(Frequency::Weekly(3).validate().is_ok());
+    ///
+    /// // Invalid frequencies
+    /// assert!(Frequency::Weekly(0).validate().is_err());
+    /// assert!(Frequency::Weekly(8).validate().is_err());
+    /// ```
     pub fn validate(&self) -> Result<(), crate::domain::DomainError> {
         match self {
             Frequency::Weekly(times) => {

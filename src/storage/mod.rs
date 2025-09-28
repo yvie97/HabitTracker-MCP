@@ -38,9 +38,35 @@ pub enum StorageError {
 }
 
 /// Trait defining the storage interface for habits
-/// 
+///
 /// This trait allows us to potentially swap out SQLite for other databases
 /// in the future while keeping the same interface.
+///
+/// # Examples
+///
+/// ```rust
+/// use habit_tracker_mcp::storage::{HabitStorage, SqliteStorage};
+/// use habit_tracker_mcp::domain::{Habit, Category, Frequency};
+///
+/// // Create a storage instance
+/// let storage = SqliteStorage::new(":memory:").unwrap();
+///
+/// // Create and store a habit
+/// let habit = Habit::new(
+///     "Morning Exercise".to_string(),
+///     Some("30 minutes of cardio".to_string()),
+///     Category::Health,
+///     Frequency::Daily,
+///     Some(30),
+///     Some("minutes".to_string()),
+/// ).unwrap();
+///
+/// storage.create_habit(&habit).unwrap();
+///
+/// // Retrieve the habit
+/// let retrieved = storage.get_habit(&habit.id).unwrap();
+/// assert_eq!(retrieved.name, "Morning Exercise");
+/// ```
 pub trait HabitStorage {
     /// Create a new habit
     fn create_habit(&self, habit: &Habit) -> Result<(), StorageError>;
